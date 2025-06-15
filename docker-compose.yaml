@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/taskflow
+    ports:
+      - "6000:6000"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    networks:
+      - app-network
+    # For development, consider adding:
+    # volumes:
+    #   - ./backend:/app
+    #   - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+    # For development, consider adding:
+    # volumes:
+    #   - ./frontend:/app
+    #   - /app/node_modules
+    # environment:
+    #   - NEXT_PUBLIC_API_URL=http://backend:6000
+
+  mongo:
+    image: mongo:6.0
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Optional optimization for smaller footprint:
+    # command: [--wiredTigerCacheSizeGB=1]
+
+volumes:
+  mongodb_data:
+    # Prevent volume from being deleted when containers are removed
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
